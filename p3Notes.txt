@@ -1,0 +1,70 @@
+Reqs:
+called newsh
+cont read user input via stdin --> carries out some action
+allow users to set variables to be used in subsiquint cmds
+accepts both built in and program-controled cmds
+
+the cmds are constructed out of tokens -- tokens are str w/o spaces with some exceptions
+	such as % which indicates a comment. newsh ignores all char in the comment
+	an empty line(or just spaces) is a valid cmd that has no effect
+
+List of built-in Cmds:
+	set <variable> <value>
+		Where <variable> is any variable name(must start with a letter), and <value> is a token. These are case-sensitive
+		Associate the name with the value of the variable in a data struct
+		Ref later using $<variable>
+
+	cd <dirName>
+		<dirName> doesnt require / to be at the beginning
+		us the getwd and chdir system calls
+
+	bp
+		List all processes running in the background
+		Format is up to us
+		Program should keep a list and not on any ext prgs
+
+	quit
+		exits with exit status 0 
+		should also accept ctl-D and treat it as if the user typed quit
+
+List of Prg-ctl Cmds:
+	cmd param*
+		user submits this cmd to exe a prg
+		cmd specifies the filename followed by 0 or more args
+		newsh has to wait for the prg to finish before accepting the next cmd
+
+		newsh looks for cmd in a list of dir via the PATH, which colon-separated list of dirs
+		If cmd starts with a / char, it is the full path name starting at root
+		And cmd starting with ./ is starting at the curr dir
+
+		ex file.c 1 2 3
+
+	cmd param* &
+		Identicle to the prev except it runs in the background.
+		So newsh should prompt and accept the next cmd
+
+Additional Reqs:
+1.	procedure to parse from std line into tokens then analyze for correctness(only for built-int cmds)
+		If invalid, print error msg(to stderr) and prompt for next cmd
+
+2.	For prg-ctl cmds, newdh should use fork() and exec() (and variants) to start a process to exe the cmd given on the cmd line
+		***cant use the system() lib to exe the cmd line
+		If the cmd is running in the foreground, then newsh waits for the curr cmd to finish before starting the next one (use waitpid() for this)
+		If running in the background, then add to list cmds running in the background and prompt the user for the next cmd
+		After the background process is complete, remove from list
+			Can assume the BG processes do not fork their own child processes
+
+3.	When encountering set <variable> <value>, store name and def. 
+	Later, replace $<variable> token with the stored def
+
+Usefull libs:
+	fopen(3), close(2), fread(3),
+	fork(2), execv(3), execve(3), chdir(2), malloc(3), perror(3), exit(2),
+	wait(2), waitpid(2), kill(2), sigprocmask(2), getcwd(3), string(3)
+
+Ex Testing:
+	**NOTE: for the below, can put these in a txt file called testfile and exe the cmd: newsh < testfile (this is how these will be tested so the prg must be able to d this)
+	cd directory_1
+	/bin/cat file1 file2 file3
+	ls -lt
+	/bin/wc file1
